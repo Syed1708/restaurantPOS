@@ -38,7 +38,7 @@ class OrderSyncController extends Controller
             'orders.*.previous_hash' => 'nullable|string|max:64',
             'orders.*.items' => 'required|array|min:1',
             'orders.*.items.*.product_name' => 'required|string',
-            'orders.*.items.*.quantity' => 'required|integer|min:1',
+            'orders.*.items.*.quantity' => 'required|integer',
             'orders.*.items.*.unit_price' => 'required|numeric',
             'orders.*.items.*.vat_rate' => 'required|numeric',
             'orders.*.items.*.subtotal' => 'required|numeric',

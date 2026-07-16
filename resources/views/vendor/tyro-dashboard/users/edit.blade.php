@@ -12,54 +12,7 @@
 
 @section('content')
 
-<!-- 🛠️ TEMPORARY POS DEBUG PANEL -->
-<div style="background: #fef2f2; border: 1px solid #fca5a5; padding: 20px; border-radius: 8px; margin-bottom: 25px; font-family: monospace; font-size: 13px; color: #7f1d1d; line-height: 20px;">
-    <p style="font-weight: bold; font-size: 16px; margin-bottom: 12px; color: #991b1b;">🔧 POS Debug Panel</p>
-    
-    <!-- 1. Check if $user exists -->
-    <p><strong>Is $user set?</strong> 
-        <span style="font-weight: bold; color: {{ isset($user) ? 'green' : 'red' }};">
-            {{ isset($user) ? 'YES (Class: ' . get_class($user) . ')' : 'NO' }}
-        </span>
-    </p>
-    @if(isset($user))
-        <p style="padding-left: 20px;">└─ <strong>$user->store_id value:</strong> <span style="font-weight: bold; color: blue;">{{ is_null($user->store_id) ? 'NULL' : $user->store_id }}</span></p>
-    @endif
 
-    <hr style="border: 0; border-top: 1px solid #fee2e2; margin: 12px 0;">
-
-    <!-- 2. Check if $model exists -->
-    <p><strong>Is $model set?</strong> 
-        <span style="font-weight: bold; color: {{ isset($model) ? 'green' : 'red' }};">
-            {{ isset($model) ? 'YES (Class: ' . get_class($model) . ')' : 'NO' }}
-        </span>
-    </p>
-    @if(isset($model))
-        <p style="padding-left: 20px;">└─ <strong>$model->store_id value:</strong> <span style="font-weight: bold; color: blue;">{{ is_null($model->store_id) ? 'NULL' : $model->store_id }}</span></p>
-    @endif
-
-    <hr style="border: 0; border-top: 1px solid #fee2e2; margin: 12px 0;">
-
-    <!-- 3. Dump all active variable names in this Blade file -->
-    <p><strong>All variables available in this view:</strong></p>
-    <pre style="background: #fff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; font-size: 12px; margin-top: 8px; max-height: 120px; overflow-y: scroll; color: #334155;">{{ json_encode(array_keys(get_defined_vars()), JSON_PRETTY_PRINT) }}</pre>
-</div>
-
-<!-- resources/views/vendor/tyro-dashboard/users/edit.blade.php -->
-
-@php
-    // 1. Get the exact database name Laravel is currently reading from
-    $activeDatabase = config('database.connections.mysql.database');
-
-    // 2. Fetch the raw row directly from MySQL for this specific user ID
-    $rawUserRow = \Illuminate\Support\Facades\DB::table('users')->where('id', $user->id)->first();
-
-    // 3. Output the diagnostic data to your browser screen
-    dump("=== 📊 POS SAA-DIAGNOSTIC ===");
-    dump("1. Active Database Laravel is reading: " . $activeDatabase);
-    dump("2. User ID currently being edited: " . $user->id);
-    dump("3. Raw Row in Database:", $rawUserRow);
-@endphp
 
     <div class="page-header">
         <div class="page-header-row">
@@ -128,7 +81,8 @@
                         <div class="checkbox-list">
                             @foreach ($roles as $role)
                                 <label class="checkbox-item">
-                                    <input type="checkbox" name="roles[]" value="{{ $role->id }}" class="checkbox-input"
+                                    <input type="checkbox" name="roles[]" value="{{ $role->id }}"
+                                        class="checkbox-input"
                                         {{ in_array($role->id, old('roles', $editUser->roles->pluck('id')->toArray())) ? 'checked' : '' }}>
                                     <div class="checkbox-item-content">
                                         <div class="checkbox-item-title">{{ $role->name }}</div>
@@ -144,24 +98,29 @@
 
                     {{-- assigned stores --}}
 
-<!-- 🚀 THE RAW DB BYPASS: Reads the exact, raw integer directly from your MySQL table -->
-@php
-    $rawStoreId = \Illuminate\Support\Facades\DB::table('users')->where('id', $user->id)->value('store_id');
-    dump($rawStoreId); // Debugging: Output the raw store_id value to verify it's being read correctly
-@endphp
+                    <!-- 🚀 THE SELF-HEALING SCANNER: Finds the true cashier being edited -->
+                    @php
+                        $targetUser = null;
+                        foreach (get_defined_vars() as $key => $value) {
+                            if ($value instanceof \App\Models\User && $value->id != auth()->id()) {
+                                $targetUser = $value;
+                                break;
+                            }
+                        }
+                    @endphp
 
-<div class="form-group mb-4">
-    <label for="store_id" class="form-label">Boutique Assignée (Store)</label>
-    <select name="store_id" id="store_id" class="form-control">
-        <option value="">Aucune (Super Admin / Siège Social)</option>
-        @foreach(\App\Models\Store::all() as $store)
-            <!-- Uses the raw database integer ($rawStoreId) for the selection match -->
-            <option value="{{ $store->id }}" @selected(isset($rawStoreId) && $rawStoreId == $store->id)>
-                {{ $store->name }} ({{ $store->city }})
-            </option>
-        @endforeach
-    </select>
-</div>
+                    <div class="form-group mb-4">
+                        <label for="store_id" class="form-label">Boutique Assignée (Store)</label>
+                        <select name="store_id" id="store_id" class="form-control">
+                            <option value="">Aucune (Super Admin / Siège Social)</option>
+                            @foreach (\App\Models\Store::all() as $store)
+                                <!-- Uses the scanned cashier ($targetUser) to pre-select the dropdown option -->
+                                <option value="{{ $store->id }}" @selected(isset($targetUser) && $targetUser->store_id == $store->id)>
+                                    {{ $store->name }} ({{ $store->city }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
                 <div class="card-footer" style="display: flex; gap: 0.75rem;">
                     <button type="submit" class="btn btn-primary">Save Changes</button>

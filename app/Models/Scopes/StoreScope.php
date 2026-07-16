@@ -15,12 +15,14 @@ class StoreScope implements Scope
     public function apply(Builder $builder, Model $model): void
     {
         if (Auth::check()) {
+            /** @var \App\Models\User $user */
+
             $user = Auth::user();
 
             // 🚀 THE SECURITY CHECK:
             // If the user is NOT a Super Admin, automatically restrict all queries 
             // to only return rows belonging to their assigned store_id!
-            if (!$user->hasRole('super-admin') && !is_null($user->store_id)) {
+            if (!$user->hasRole('superadmin') && !is_null($user->store_id)) {
                 $builder->where($model->getTable() . '.store_id', $user->store_id);
             }
         }

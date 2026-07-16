@@ -1,4 +1,5 @@
 <?php
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -14,52 +15,100 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Run Tyro's seeders silently
+        // 1. Run Tyro's seeders silently using the --force flag
         Artisan::call('tyro:seed-all', ['--force' => true]);
 
-        // 2. Create your custom Super Admin
-        $admin = User::create([
-            'name' => 'SuperAdmin',
-            'email' => 'admin@burgerpalace.fr',
-            'password' => Hash::make('adminpassword'), 
-            'store_id' => null, 
-        ]);
-
-        $superAdminRole = Role::where('slug', 'superadmin')->first();
-        if ($superAdminRole) {
-            $admin->assignRole($superAdminRole);
+        // 🚀 THE AUTOMATED FIX:
+        // Find Tyro's default 'super-admin' slug and rename it to 'superadmin' (no hyphen)
+        // so it matches your Spatie layouts, model checks, and config files perfectly!
+        $seededRole = Role::where('slug', 'super-admin')->first();
+        if ($seededRole) {
+            $seededRole->update(['slug' => 'superadmin']);
         }
 
-        // 3. Create the Bordeaux Store
-        $store = Store::create([
-            'name' => 'Burger Palace Bordeaux',
-            'address' => '12 Rue Sainte-Catherine',
-            'postal_code' => '33000',
-            'city' => 'Bordeaux',
-            'siret' => '12345678901234',
-            'vat_number' => 'FR12345678901',
-        ]);
-
-        // 4. Create the Cashier
-        $cashier = User::create([
-            'name' => 'Cashier One',
-            'email' => 'cashier@burgerpalace.fr',
-            'password' => Hash::make('password123'),
-            'store_id' => $store->id,
-        ]);
+        // Retrieve Tyro's roles
+        $superAdminRole = Role::where('slug', 'superadmin')->first();
+        
+        $adminRole = Role::firstOrCreate(
+            ['slug' => 'admin'],
+            ['name' => 'Admin']
+        );
 
         $cashierRole = Role::firstOrCreate(
             ['slug' => 'cashier'],
             ['name' => 'Cashier']
         );
-        $cashier->assignRole($cashierRole);
+
+        // 2. Create your custom Super Admin (SaaS Owner)
+        $superAdmin = User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@burgerpalace.fr',
+            'password' => Hash::make('adminpassword'), 
+            'store_id' => null, // Global access
+        ]);
+        if ($superAdminRole) {
+            $superAdmin->assignRole($superAdminRole);
+        }
 
         // ======================================================
-        // 🍔 MULTIDIMENSIONAL DATASET (12 Categories, 91 Products)
+        // 3. CREATE 3 INDEPENDENT STORES
+        // ======================================================
+        $stores = [
+            'Bordeaux' => Store::create([
+                'name' => 'Burger Palace Bordeaux',
+                'address' => '12 Rue Sainte-Catherine',
+                'postal_code' => '33000',
+                'city' => 'Bordeaux',
+                'siret' => '12345678901234',
+                'vat_number' => 'FR12345678901',
+            ]),
+            'Paris' => Store::create([
+                'name' => 'Burger Palace Paris',
+                'address' => '45 Rue de Rivoli',
+                'postal_code' => '75001',
+                'city' => 'Paris',
+                'siret' => '98765432109876',
+                'vat_number' => 'FR98765432109',
+            ]),
+            'Lyon' => Store::create([
+                'name' => 'Burger Palace Lyon',
+                'address' => '8 Rue de la République',
+                'postal_code' => '69002',
+                'city' => 'Lyon',
+                'siret' => '56789012345678',
+                'vat_number' => 'FR56789012345',
+            ]),
+        ];
+
+        // ======================================================
+        // 4. CREATE 3 STORE MANAGERS (ADMINS) & 3 CASHIERS
+        // ======================================================
+        foreach ($stores as $city => $storeObj) {
+            // Create Store Manager (Admin)
+            $manager = User::create([
+                'name' => "Manager {$city}",
+                'email' => "manager." . strtolower($city) . "@burgerpalace.fr",
+                'password' => Hash::make('password123'),
+                'store_id' => $storeObj->id, // Locked to their physical store
+            ]);
+            $manager->assignRole($adminRole);
+
+            // Create Cashier
+            $cashier = User::create([
+                'name' => "Cashier {$city}",
+                'email' => "cashier." . strtolower($city) . "@burgerpalace.fr",
+                'password' => Hash::make('password123'),
+                'store_id' => $storeObj->id, // Locked to their physical store
+            ]);
+            $cashier->assignRole($cashierRole);
+        }
+
+        // ======================================================
+        // 🍔 MULTIDIMENSIONAL CATALOG DATASET (91 Products)
         // ======================================================
         $menuData = [
             [
-                'category' => 'Burgers Boeuf', // Hot food -> 10% TVA
+                'category' => 'Burgers Boeuf',
                 'products' => [
                     ['name' => 'Single Cheeseburger', 'price' => 7.50, 'vat_rate' => 10.00],
                     ['name' => 'Double Cheeseburger', 'price' => 9.50, 'vat_rate' => 10.00],
@@ -72,7 +121,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
-                'category' => 'Burgers Volaille & Poisson', // Hot food -> 10% TVA
+                'category' => 'Burgers Volaille & Poisson',
                 'products' => [
                     ['name' => 'Crispy Chicken Burger', 'price' => 8.50, 'vat_rate' => 10.00],
                     ['name' => 'Grilled Chicken Burger', 'price' => 8.90, 'vat_rate' => 10.00],
@@ -85,7 +134,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
-                'category' => 'Burgers Veggie', // Hot food -> 10% TVA
+                'category' => 'Burgers Veggie',
                 'products' => [
                     ['name' => 'Green Garden Burger', 'price' => 8.20, 'vat_rate' => 10.00],
                     ['name' => 'Spicy Avocado Veggie', 'price' => 9.50, 'vat_rate' => 10.00],
@@ -97,7 +146,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
-                'category' => 'Frites & Accompagnements', // Hot food -> 10% TVA
+                'category' => 'Frites & Accompagnements',
                 'products' => [
                     ['name' => 'Small French Fries', 'price' => 2.50, 'vat_rate' => 10.00],
                     ['name' => 'Medium French Fries', 'price' => 3.50, 'vat_rate' => 10.00],
@@ -110,7 +159,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
-                'category' => 'Nuggets & Wings', // Hot food -> 10% TVA
+                'category' => 'Nuggets & Wings',
                 'products' => [
                     ['name' => 'Chicken Nuggets x4', 'price' => 2.90, 'vat_rate' => 10.00],
                     ['name' => 'Chicken Nuggets x6', 'price' => 3.90, 'vat_rate' => 10.00],
@@ -123,7 +172,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
-                'category' => 'Salades Fraîches', // Food -> 10% TVA
+                'category' => 'Salades Fraîches',
                 'products' => [
                     ['name' => 'Classic Caesar Salad', 'price' => 8.50, 'vat_rate' => 10.00],
                     ['name' => 'Crispy Caesar Salad', 'price' => 9.90, 'vat_rate' => 10.00],
@@ -135,7 +184,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
-                'category' => 'Sauces', // Condiments -> 10% TVA
+                'category' => 'Sauces',
                 'products' => [
                     ['name' => 'Ketchup Cup', 'price' => 0.30, 'vat_rate' => 10.00],
                     ['name' => 'Mayonnaise Cup', 'price' => 0.30, 'vat_rate' => 10.00],
@@ -148,7 +197,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
-                'category' => 'Desserts & Pâtisseries', // Takeaway Cold Sweets -> 5.5% TVA
+                'category' => 'Desserts & Pâtisseries',
                 'products' => [
                     ['name' => 'Chocolate Chip Cookie', 'price' => 2.00, 'vat_rate' => 5.50],
                     ['name' => 'Double Chocolate Muffin', 'price' => 3.00, 'vat_rate' => 5.50],
@@ -161,7 +210,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
-                'category' => 'Glaces & Shakes', // Prepared dairy cold desserts -> 10% TVA
+                'category' => 'Glaces & Shakes',
                 'products' => [
                     ['name' => 'Vanilla Soft Serve', 'price' => 2.50, 'vat_rate' => 10.00],
                     ['name' => 'Chocolate Soft Serve', 'price' => 2.50, 'vat_rate' => 10.00],
@@ -174,7 +223,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
-                'category' => 'Boissons Gazeuses', // Sugary Sodas -> 20% TVA
+                'category' => 'Boissons Gazeuses',
                 'products' => [
                     ['name' => 'Coca-Cola Classic 33cl', 'price' => 2.50, 'vat_rate' => 20.00],
                     ['name' => 'Coca-Cola Zero 33cl', 'price' => 2.50, 'vat_rate' => 20.00],
@@ -187,7 +236,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
-                'category' => 'Eaux & Jus', // Water (5.5% TVA) vs Juices (20% TVA)
+                'category' => 'Eaux & Jus',
                 'products' => [
                     ['name' => 'Evian Still Water 50cl', 'price' => 1.80, 'vat_rate' => 5.50],
                     ['name' => 'Badoit Sparkling 50cl', 'price' => 2.00, 'vat_rate' => 5.50],
@@ -199,7 +248,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
-                'category' => 'Café & Boissons Chaudes', // Prepared Hot drinks -> 10% TVA
+                'category' => 'Café & Boissons Chaudes',
                 'products' => [
                     ['name' => 'Espresso Shot', 'price' => 1.50, 'vat_rate' => 10.00],
                     ['name' => 'Double Espresso', 'price' => 2.20, 'vat_rate' => 10.00],
@@ -213,21 +262,28 @@ class DatabaseSeeder extends Seeder
             ]
         ];
 
-        // 5. Populate categories and products using a fast SQL loop
-        foreach ($menuData as $group) {
-            $category = Category::create([
-                'store_id' => $store->id,
-                'name' => $group['category']
-            ]);
-
-            foreach ($group['products'] as $product) {
-                Product::create([
-                    'category_id' => $category->id,
-                    'name' => $product['name'],
-                    'price' => $product['price'],
-                    'vat_rate' => $product['vat_rate'],
-                    'is_active' => true,
+        // ======================================================
+        // 5. SEED CATALOG (12 CATS, 91 PRODUCTS) FOR EACH OF THE 3 STORES
+        // ======================================================
+        foreach ($stores as $city => $storeObj) {
+            foreach ($menuData as $group) {
+                // Create category assigned specifically to this store
+                $category = Category::create([
+                    'store_id' => $storeObj->id,
+                    'name' => $group['category']
                 ]);
+
+                // Create products inside this category
+                foreach ($group['products'] as $product) {
+                    Product::create([
+                        'category_id' => $category->id,
+                        'store_id' => $storeObj->id, // Populates our new, fast store_id column!
+                        'name' => $product['name'],
+                        'price' => $product['price'],
+                        'vat_rate' => $product['vat_rate'],
+                        'is_active' => true,
+                    ]);
+                }
             }
         }
 

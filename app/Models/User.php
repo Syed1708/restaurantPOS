@@ -93,8 +93,16 @@ class User extends Authenticatable
 
             if ($assigningSuperAdmin) {
                 $user->store_id = null; // Forces NULL for superadmins
-            } elseif (request()->has('store_id')) {
-                $user->store_id = request()->input('store_id') ?: null;
+            } else {
+                                // 🚀 AUTOMATIC SAAS INHERITANCE:
+                // If the logged-in creator is a Store Manager, force the newly created 
+                // cashier to belong strictly to their same store_id!
+                if (auth()->check() && !auth()->user()->hasRole('superadmin')) {
+                    $user->store_id = auth()->user()->store_id;
+                } else {
+                    // If you are the Super Admin, read the selected store from the dropdown
+                    $user->store_id = request()->input('store_id') ?: null;
+                }
             }
         });
     }

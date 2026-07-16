@@ -213,7 +213,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'resources' => [
-                // 🚀 NEW: Dynamic Store Management
+        // 🚀 NEW: Dynamic Store Management
         'stores' => [
             'model' => 'App\Models\Store',
             'title' => 'Boutiques (Stores)',
@@ -231,10 +231,23 @@ return [
         'categories' => [
             'model' => 'App\Models\Category',
             'title' => 'Catégories',
+            'roles' => ['admin', 'superadmin'],
             'icon' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>',
             'fields' => [
                 'name' => ['type' => 'text', 'label' => 'Nom de la catégorie', 'rules' => 'required|max:255'],
+
+                // 🚀 SAFE RELATIONSHIP SELECTOR:
+                'store_id' => [
+                    'type' => 'select',
+                    'label' => 'Boutique Assignée (Store)',
+                    'relationship' => 'store', // Points to public function store() inside Category.php
+                    'option_label' => 'name',   // Displays the name of the store in the dropdown
+                    'rules' => 'nullable', // Ensures the selected store_id exists in the stores table
+                    'placeholder' => 'Toutes les boutiques (All Stores)',
+
+                ],
             ],
+
         ],
         'products' => [
             'model' => 'App\Models\Product',
@@ -245,7 +258,7 @@ return [
                 'category_id' => [
                     'type' => 'select',
                     'label' => 'Catégorie',
-                    'relationship' => 'category', 
+                    'relationship' => 'category',
                     'option_label' => 'name',
                     'rules' => 'required',
                 ],
@@ -260,23 +273,33 @@ return [
                     ],
                     'rules' => 'required'
                 ],
+                // 🚀 NEW: Visual Store Dropdown for Categories
+                'store_id' => [
+                    'type' => 'select',
+                    'label' => 'Boutique Assignée (Store)',
+                    'relationship' => 'store', // Points to public function store() inside Category.php
+                    'option_label' => 'name',   // Displays the name of the store in the dropdown
+                    'rules' => 'nullable',
+                    'placeholder' => 'Toutes les boutiques (All Stores)',
+
+                ],
                 'is_active' => ['type' => 'boolean', 'label' => 'Actif (Affiché sur la caisse)', 'default' => true],
             ],
         ],
-    
-    // 'resources' => [
-    //     // Example:
-    //     // 'posts' => [
-    //     //     'model' => 'App\Models\Post',
-    //     //     'title' => 'Posts',
-    //     //     'icon' => '<svg>...</svg>', // Optional SVG icon
-    //     //     'fields' => [
-    //     //         'title' => ['type' => 'text', 'label' => 'Title', 'rules' => 'required'],
-    //     //         'content' => ['type' => 'textarea', 'label' => 'Content'],
-    //     //     ],
-    //     // ],
-    // ],
-    // 'resources' => [
+
+        // 'resources' => [
+        //     // Example:
+        //     // 'posts' => [
+        //     //     'model' => 'App\Models\Post',
+        //     //     'title' => 'Posts',
+        //     //     'icon' => '<svg>...</svg>', // Optional SVG icon
+        //     //     'fields' => [
+        //     //         'title' => ['type' => 'text', 'label' => 'Title', 'rules' => 'required'],
+        //     //         'content' => ['type' => 'textarea', 'label' => 'Content'],
+        //     //     ],
+        //     // ],
+        // ],
+        // 'resources' => [
         // 'posts' => [
         //     'model' => 'App\Models\Post',
         //     'title' => 'Posts',

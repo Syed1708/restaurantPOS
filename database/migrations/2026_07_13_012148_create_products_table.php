@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')->constrained()->onDelete('cascade');
+            $table->foreignId('store_id')->nullable()->constrained()->onDelete('cascade');
+
             $table->string('name');
             $table->decimal('price', 8, 2); // Exclude VAT or Include VAT depending on your preference. Typically Include VAT (TTC) for B2C fast food.
             $table->decimal('vat_rate', 4, 2); // e.g., 5.50, 10.00, 20.00

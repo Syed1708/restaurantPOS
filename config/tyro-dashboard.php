@@ -22,9 +22,10 @@ return [
     |
     | Users with these roles will have full access to admin features
     | (user management, role management, privilege management, settings).
-    |
+    |problem with super-admin vs superadmin, use superadmin everywhere balde exteed use can directive wit
+    with superadmin but here in config use supe-radmin, then i modify it superadmin
     */
-    'admin_roles' => ['admin', 'super-admin'],
+    'admin_roles' => ['admin', 'superadmin'],
 
     /*
     |--------------------------------------------------------------------------
@@ -131,7 +132,7 @@ return [
     |
     */
     'protected' => [
-        'roles' => ['admin', 'super-admin', 'user'],
+        'roles' => ['admin', 'superadmin', 'user'],
         'users' => [], // Add user IDs that cannot be deleted
     ],
 
@@ -206,6 +207,63 @@ return [
     | Define your resources here to automatically generate CRUD interfaces.
     |
     */
+    /*
+    |--------------------------------------------------------------------------
+    | Dynamic Resources (CRUD)
+    |--------------------------------------------------------------------------
+    */
+    'resources' => [
+                // 🚀 NEW: Dynamic Store Management
+        'stores' => [
+            'model' => 'App\Models\Store',
+            'title' => 'Boutiques (Stores)',
+            // 'roles' => ['admin', 'superadmin'], // Accessible only by admins
+            'icon' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 1.996-.946a3.001 3.001 0 0 0 3.75.615 2.993 2.993 0 0 0 2.25-.615 3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.5a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" /></svg>',
+            'fields' => [
+                'name' => ['type' => 'text', 'label' => 'Nom de la Boutique', 'rules' => 'required|max:255'],
+                'address' => ['type' => 'text', 'label' => 'Adresse', 'rules' => 'nullable|max:255'],
+                'postal_code' => ['type' => 'text', 'label' => 'Code Postal', 'rules' => 'nullable|max:10'],
+                'city' => ['type' => 'text', 'label' => 'Ville', 'rules' => 'nullable|max:100'],
+                'siret' => ['type' => 'text', 'label' => 'Numéro SIRET', 'rules' => 'nullable|size:14'],
+                'vat_number' => ['type' => 'text', 'label' => 'Numéro de TVA Intracom', 'rules' => 'nullable|max:20'],
+            ]
+        ],
+        'categories' => [
+            'model' => 'App\Models\Category',
+            'title' => 'Catégories',
+            'icon' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>',
+            'fields' => [
+                'name' => ['type' => 'text', 'label' => 'Nom de la catégorie', 'rules' => 'required|max:255'],
+            ],
+        ],
+        'products' => [
+            'model' => 'App\Models\Product',
+            'title' => 'Produits',
+            'icon' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>',
+            'fields' => [
+                'name' => ['type' => 'text', 'label' => 'Nom du produit', 'rules' => 'required|max:255'],
+                'category_id' => [
+                    'type' => 'select',
+                    'label' => 'Catégorie',
+                    'relationship' => 'category', 
+                    'option_label' => 'name',
+                    'rules' => 'required',
+                ],
+                'price' => ['type' => 'number', 'label' => 'Prix de Vente (TTC) in €', 'rules' => 'required|numeric|min:0'],
+                'vat_rate' => [
+                    'type' => 'select',
+                    'label' => 'Taux de TVA',
+                    'options' => [
+                        '10.00' => '10,0% (Plats Chauds / Sur Place)',
+                        '5.50' => '5,5% (Plats Froids / À Emporter / Eaux)',
+                        '20.00' => '20,0% (Sodas / Alcools)'
+                    ],
+                    'rules' => 'required'
+                ],
+                'is_active' => ['type' => 'boolean', 'label' => 'Actif (Affiché sur la caisse)', 'default' => true],
+            ],
+        ],
+    
     // 'resources' => [
     //     // Example:
     //     // 'posts' => [
@@ -218,7 +276,7 @@ return [
     //     //     ],
     //     // ],
     // ],
-    'resources' => [
+    // 'resources' => [
         // 'posts' => [
         //     'model' => 'App\Models\Post',
         //     'title' => 'Posts',

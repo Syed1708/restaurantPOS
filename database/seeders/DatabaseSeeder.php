@@ -19,13 +19,13 @@ class DatabaseSeeder extends Seeder
 
         // 2. Create your custom Super Admin
         $admin = User::create([
-            'name' => 'Super Admin',
+            'name' => 'SuperAdmin',
             'email' => 'admin@burgerpalace.fr',
             'password' => Hash::make('adminpassword'), 
             'store_id' => null, 
         ]);
 
-        $superAdminRole = Role::where('slug', 'super-admin')->first();
+        $superAdminRole = Role::where('slug', 'superadmin')->first();
         if ($superAdminRole) {
             $admin->assignRole($superAdminRole);
         }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\StoreScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -29,6 +30,10 @@ class Order extends Model
         'completed_at' => 'datetime',
     ];
 
+       protected static function booted(): void
+    {
+        static::addGlobalScope(new StoreScope);
+    }
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
